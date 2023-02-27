@@ -1,0 +1,7 @@
+site_name: Go basic concepts
+site_url: https://example.com/
+nav:
+  - Home: index.md
+  - Concepts:
+    - Documentation: 'concepts/01-documentation.md'
+theme: readthedocs
