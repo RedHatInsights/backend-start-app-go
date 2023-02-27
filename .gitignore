@@ -1,2 +1,8 @@
-.idea/
+# Binaries
+api
+
+# Local configs
 mk/local.mk
+
+# Studio metadata
+.idea/
