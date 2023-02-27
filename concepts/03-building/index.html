@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://example.com/concepts/03-building/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Building - Go basic concepts</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Building";
+        var mkdocs_page_input_path = "concepts/03-building.md";
+        var mkdocs_page_url = "/concepts/03-building/";
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Go basic concepts
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Concepts</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../01-documentation/">Documentation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../02-makefile/">Makefile</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Building</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#go-dependencies">Go dependencies</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#the-binary">The binary</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#containerization">Containerization</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#first-is-the-build-phase">First is the build phase.</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#second-phase-produces-the-final-container-image">Second phase produces the final container image</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Go basic concepts</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Concepts &raquo;</li>
+      <li>Building</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="building-your-project">Building your project</h2>
+<p>Exciting! We are getting somewhere :)</p>
+<p>You can run your app by:</p>
+<pre><code class="language-shell">make run
+</code></pre>
+<p>And you can build a container for it locally by:</p>
+<pre><code class="language-shell">make build-podman
+</code></pre>
+<p>Following information is all about what happens when you run these commands :)</p>
+<h3 id="go-dependencies">Go dependencies</h3>
+<p>We have three <code>make</code> targets for working with dependencies:</p>
+<ul>
+<li><code>make download-deps</code> installs dependencies locally (aliased <code>make prep</code>)</li>
+<li><code>make update-deps</code> updates dependencies to the newest versions</li>
+<li><code>make tidy-deps</code> cleans up dependencies locally</li>
+</ul>
+<h3 id="the-binary">The binary</h3>
+<p>The main binary is called <code>api</code> and it serves as api application http server for our service.</p>
+<p>It's entry point is <code>cmd/api/main.go</code></p>
+<h3 id="containerization">Containerization</h3>
+<p>Your app will run in the production environment in Container in OpenShift.
+So lets package our app in a Container :)</p>
+<p>You can build the container with Podman by running <code>make build-podman</code>.</p>
+<p>There are two phases in the build. It is captured in <a href="../../build/Containerfile"><code>Containerfile</code></a>.</p>
+<h4 id="first-is-the-build-phase">First is the build phase.</h4>
+<p>We use the official Red Hat go-toolset build container to build our projects.
+We have manually set the go version of the container, when bumping the go version, it needs to be bumped here.</p>
+<p>The build itself is done by copying all project files in <code>/build</code> directory in the build container.
+Followed by running <code>make prep build strip</code> which runs phases:</p>
+<ul>
+<li>Install dependencies</li>
+<li>Building binaries</li>
+<li>Stripping binaries of debug information (to keep them smaller).</li>
+</ul>
+<pre><code class="language-Dockerfile">FROM registry.access.redhat.com/ubi8/go-toolset:1:18 as build
+USER 0
+RUN mkdir /build
+WORKDIR /build
+COPY . .
+RUN make prep build strip
+</code></pre>
+<h4 id="second-phase-produces-the-final-container-image">Second phase produces the final container image</h4>
+<p>It just copies the binaries from the <code>build</code> container. </p>
+<pre><code class="language-Dockerfile">FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+COPY --from=build /build/api /api
+USER 1001
+CMD [&quot;/api&quot;]
+</code></pre>
+<p>We are done :)</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../02-makefile/" class="btn btn-neutral float-left" title="Makefile"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../02-makefile/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
