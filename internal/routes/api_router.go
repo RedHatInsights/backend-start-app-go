@@ -1,9 +1,11 @@
 package routes
 
 import (
+	"consoledot-go-template/internal/logging"
 	"consoledot-go-template/internal/services"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 )
 
 // PathPrefix determines the entry point for all public incoming requests.
@@ -14,6 +16,7 @@ func PathPrefix() string {
 
 func apiRouter() *chi.Mux {
 	router := chi.NewRouter()
+	router.Use(logging.NewMiddleware(log.Logger))
 	mountAPI(router)
 	return router
 }

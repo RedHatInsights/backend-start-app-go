@@ -1,6 +1,7 @@
 package main
 
 import (
+	"consoledot-go-template/internal/logging"
 	"consoledot-go-template/internal/routes"
 	"context"
 	"errors"
@@ -9,11 +10,16 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	router := routes.RootRouter()
+	logger, closeFn := logging.InitializeLogger()
+	defer closeFn()
+	log.Logger = logger
 
+	router := routes.RootRouter()
 	apiServer := http.Server{
 		Addr:    fmt.Sprintf(":%d", 8000),
 		Handler: router,
