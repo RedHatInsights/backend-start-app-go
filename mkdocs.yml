@@ -5,4 +5,5 @@ nav:
   - Concepts:
     - Documentation: 'concepts/01-documentation.md'
     - Makefile: 'concepts/02-makefile.md'
+    - Building: 'concepts/03-building.md'
 theme: readthedocs
