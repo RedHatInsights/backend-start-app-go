@@ -43,6 +43,8 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href=".">Home</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#repository-structure">Repository structure</a>
+    </li>
     </ul>
                 </li>
               </ul>
@@ -53,6 +55,10 @@
                   <li class="toctree-l1"><a class="reference internal" href="concepts/02-makefile/">Makefile</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="concepts/03-building/">Building</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="concepts/04-routing/">Routing</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="concepts/05-logging/">Logging</a>
                   </li>
               </ul>
       </div>
@@ -80,6 +86,10 @@
               
                 <h1 id="consoledot-service-in-go">ConsoleDot service in Go</h1>
 <p>This projects aims to cover all basic concepts needed for development of service for console.redhat.com.</p>
+<p>It aims to be a basic API serving service with a database.</p>
+<h2 id="repository-structure">Repository structure</h2>
+<p>All packages live under <code>/internal</code> to denote we do not intend to share these with other apps.</p>
+<p>All binaries have a directory under <code>/cmd</code> these are the app entrypoints.</p>
               
             </div>
           </div><footer>
@@ -127,5 +137,5 @@
 
 <!--
 MkDocs version : 1.4.2
-Build Date UTC : 2023-02-27 14:16:18.520175+00:00
+Build Date UTC : 2023-02-28 11:03:43.439061+00:00
 -->

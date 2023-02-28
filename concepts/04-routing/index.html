@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://example.com/concepts/04-routing/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Routing - Go basic concepts</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Routing";
+        var mkdocs_page_input_path = "concepts/04-routing.md";
+        var mkdocs_page_url = "/concepts/04-routing/";
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Go basic concepts
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Concepts</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../01-documentation/">Documentation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../02-makefile/">Makefile</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../03-building/">Building</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Routing</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#root-router">Root router</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#api-router">API router</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#individual-routes">Individual routes</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#grouping-routes">Grouping routes</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#http-server">HTTP server</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#start-listening">Start listening</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stop-listening">Stop listening</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../05-logging/">Logging</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Go basic concepts</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Concepts &raquo;</li>
+      <li>Routing</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="http-routing">HTTP Routing</h2>
+<p>Here we are diving into the implementation of the service itself.</p>
+<p>For routing this service template uses <a href="https://go-chi.io/#/">go-chi</a> library, as it is the most lightweight, but still does all we need.
+You can of course choose a different one if you like and the concepts will be very similar.</p>
+<p>We will place all relevant routing code under <code>/internal/routes</code>.</p>
+<p>Here we will not talk about metrics router, that is covered in Metrics Concept.</p>
+<h3 id="root-router">Root router</h3>
+<p>The entry point to the routing is <code>routes.RootRouter()</code> this sets up the root path router.</p>
+<p>This is <code>/</code> path on our server.
+This service uses this path for Liveness and Readiness probes of k8s.
+We will get to this  later.</p>
+<p>For now the important part is that within this router we mount another API router onto a prefixed path.</p>
+<h3 id="api-router">API router</h3>
+<p>Our service will coexist with other services behind a shared public gateway.
+The gateway routes traffic by route prefix, but does not strip the matched prefix.
+So if our service will match for traffic on <code>/api/template</code> prefix, the full path gets forwarded.
+This means all our public facing paths need to be exposed with this prefix.</p>
+<p>The prefix is determined by <code>routes.PathPrefix</code> function.</p>
+<h3 id="individual-routes">Individual routes</h3>
+<p>All routes have their matching pattern and a <a href="https://pkg.go.dev/net/http#HandlerFunc"><code>http.HandlerFunc</code></a>.
+Handler function is a function that receives a request as a parameter and writes response in a specialized IO.
+Our use of handlers is basically Controller from an MVC apps.
+We will put all our handlers in a <code>/internal/services</code> folder, more on that later.</p>
+<p>Chi routes are defined by calling function named by their matching HTTP verb.
+For example <code>router.Get("/hello", Handler)</code> creates a GET route for pattern <code>/hello</code>.</p>
+<h3 id="grouping-routes">Grouping routes</h3>
+<p>We can group routes under one prefix and only define the suffix for them.
+To define the route with a prefix we would do following.</p>
+<pre><code class="language-go">router.Route(&quot;/prefix&quot;, func(subRouter chi.Router) {
+    subRouter.Get(&quot;/hello&quot;, Handler)
+})
+</code></pre>
+<h3 id="http-server">HTTP server</h3>
+<p>To put this all together, we will put following code in our <code>api</code> entry point and start a http server.</p>
+<pre><code class="language-go">// cmd/api/main.go
+
+rootRouter := routes.RootRouter()
+
+apiServer := http.Server{
+    Addr:    fmt.Sprintf(&quot;:%d&quot;, 8000),
+    Handler: rootRouter,
+}
+</code></pre>
+<p>Later we will make this port configurable.</p>
+<h3 id="start-listening">Start listening</h3>
+<p>Following code starts up the server we've set up.
+It will write out error message unless the server has been stopped gracefully. </p>
+<pre><code class="language-go">if err := apiServer.ListenAndServe(); err != nil {
+    if !errors.Is(err, http.ErrServerClosed) {
+        log.Fatal().Err(err).Msg(&quot;Main service listen error&quot;)
+    }
+}
+</code></pre>
+<h3 id="stop-listening">Stop listening</h3>
+<p>Here we will cover graceful shutdown of our server.
+We won't cover all the details of following code.</p>
+<p>We set up a channel that will get notified when we receive <code>SIGINT</code> or <code>SIGTERM</code>.
+The signal wait is blocking, so we are waiting for it in separate goroutine.</p>
+<p>We have another channel that we wait for in our main and once this gets triggered, we finish.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../03-building/" class="btn btn-neutral float-left" title="Building"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../05-logging/" class="btn btn-neutral float-right" title="Logging">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../03-building/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../05-logging/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://example.com/concepts/05-logging/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Logging - Go basic concepts</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Logging";
+        var mkdocs_page_input_path = "concepts/05-logging.md";
+        var mkdocs_page_url = "/concepts/05-logging/";
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Go basic concepts
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Concepts</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../01-documentation/">Documentation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../02-makefile/">Makefile</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../03-building/">Building</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../04-routing/">Routing</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Logging</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#log-output-cloudwatch">Log output - cloudwatch</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#log-middleware">Log middleware</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#add-middleware-to-stack">Add middleware to stack</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#using-the-logger">Using the logger</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Go basic concepts</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Concepts &raquo;</li>
+      <li>Logging</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="logging">Logging</h2>
+<p>This template introduces <a href="https://github.com/rs/zerolog">zerolog</a> over platform recommended <a href="https://github.com/sirupsen/logrus">logrus</a>.
+Until this is interchangeable Authors feel like zerolog is faster, easier to set up and use and has smaller memory footprint.</p>
+<p>The global logger is set up at the start of our service.
+For every request we will set up a new context logger and store it into a request context.
+We use a logging <a href="https://drstearns.github.io/tutorials/gomiddleware/">middleware</a> to do this.</p>
+<p>This approach makes it easy to add additional fields and these are passed to all log entries.
+Context should be kept very small as it gets passed very often through the whole stack.
+Zerolog has such a small footprint that this is ok to do.</p>
+<p>This approach standardize logging into a pattern of fetching logger from context and logging with help of this logger.
+Every function can then be called in any context. We are always sure it logs correct log identifiers.</p>
+<h3 id="log-output-cloudwatch">Log output - cloudwatch</h3>
+<p>We need to set up logging output.
+The template has two outputs.
+Stdout writer used for development and for CI pipelines is very easy to initialize.</p>
+<pre><code class="language-go">stdWriter := zerolog.ConsoleWriter{
+    Out:        os.Stdout,
+    TimeFormat: time.Kitchen,
+}
+</code></pre>
+<p>Second for production logging.</p>
+<p>In production, we are logging to Amazon Cloudwatch.
+From Cloudwatch, the platform team automatically pulls the logs to our Kibana.
+The service responsibility is only to deliver logs to Cloudwatch.</p>
+<p>To set up Cloudwatch writer, in our <code>logging.InitializeLogger</code> function,
+we need Cloudwatch credentials, we will get to that in next chapter.</p>
+<p>Following snippet initializes Cloudwatch writer assuming the credentials variables.</p>
+<pre><code class="language-go">func newCloudwatchWriter(region string, key string, secret string, session string, logGroup string, logStream string) (*io.Writer, error) {
+    cache := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(key, secret, session))
+    cwClient := cloudwatchlogs.New(cloudwatchlogs.Options{
+        Region:      region,
+        Credentials: cache,
+    })
+    cloudWatchWriter, err := cloudwatchwriter2.NewWithClient(cwClient, 500*time.Millisecond, logGroup, logStream)
+    return cloudWatchWriter, err
+}
+</code></pre>
+<p>Now when we will be ready to decide whether we want to use Cloudwatch or Stdout,
+we are ready to use the following to initialize our logger.</p>
+<pre><code class="language-go">zerolog.SetGlobalLevel(level)
+//nolint:reassign
+zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+
+output := initializeLogOutput() // here we will need to decide on the output used.
+logger := zerolog.New(output)
+
+// decorate logger (and thus every log line) with hostname and timestamp
+logger = logger.With().Timestamp().Str(&quot;hostname&quot;, hostname).Logger()
+</code></pre>
+<h3 id="log-middleware">Log middleware</h3>
+<p>Middleware in Golang is a function that takes <code>next http.Handler</code> as parameter and returns http.Handler itself.
+The inner http.Handler needs to call <code>next.ServeHTTP()</code> to invoke the following handler.
+The simplest middleware is a function, that is called on <code>ServeHTTP()</code>,
+go provides a helper <a href="https://pkg.go.dev/net/http#HandlerFunc"><code>http.HandlerFunc</code></a> to create such a function</p>
+<p>We further wrap that with a higher order function that allows us to pass logger.
+In case we want to change logger we want to use, it would be easier to do then if the middleware would use the global logger directly.</p>
+<p>The middleware enhances the global (passed in) logger
+with the request context fields like remote IP, request path, HTTP method.
+Then we log the very first line of every request.</p>
+<pre><code class="language-go">loggerCtx := globalLogger.With().
+    Str(&quot;remote_ip&quot;, r.RemoteAddr).
+    Str(&quot;url&quot;, r.URL.Path).
+    Str(&quot;method&quot;, r.Method)
+contextLogger := loggerCtx.Logger()
+contextLogger.Debug().Msgf(&quot;Started %s request %s&quot;, r.Method, r.URL.Path)
+</code></pre>
+<p>The major thing we do here is to store our logger into the context that we pass down the middleware stack.</p>
+<pre><code class="language-go">// see logging.WithLogger()
+ctx := WithLogger(r.Context(), &amp;contextLogger)
+next.ServeHTTP(ww, r.WithContext(ctx))
+</code></pre>
+<p>We follow up with deferring a function to log last log line of every request.
+We run it deferred, effectively after all following middlewares and thus at the end of the request.</p>
+<p>This function has one very special effect, it recovers from panic and logs it.
+Every panic that happens further down the middleware stack is thus recovered and logged in our middleware.</p>
+<pre><code class="language-go">t1 := time.Now()
+defer func() {
+    duration := time.Since(t1)
+    afterLogger := contextLogger.With().
+        Dur(&quot;latency_ms&quot;, duration).
+        Int(&quot;bytes_in&quot;, bytesIn).
+        Int(&quot;bytes_out&quot;, ww.BytesWritten()).
+        Logger()
+
+    // prevent the application from exiting
+    if rec := recover(); rec != nil {
+        afterLogger.Error().
+            Bool(&quot;panic&quot;, true).
+            Int(&quot;status&quot;, http.StatusInternalServerError).
+            Msgf(&quot;Unhandled panic: %s\n%s&quot;, rec, debug.Stack())
+        http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+    }
+
+    log.Info().
+        Int(&quot;status&quot;, ww.Status()).
+        Msgf(&quot;Completed %s request %s in %s with %d&quot;,
+            r.Method, r.URL.Path, duration.Round(time.Millisecond).String(), ww.Status())
+}()
+</code></pre>
+<h3 id="add-middleware-to-stack">Add middleware to stack</h3>
+<p>Now the last thing we need to do is to add our middleware to the API router.</p>
+<pre><code class="language-go">// internal/routes/api_router.go
+
+router.Use(logging.NewMiddleware(log.Logger))
+</code></pre>
+<p>And we are all setup.</p>
+<h3 id="using-the-logger">Using the logger</h3>
+<p>Now we have the logger in the context, we will be passing context through the app.
+To use the logger, we will do following.</p>
+<pre><code class="language-go">logger := logging.Logger(ctx)
+
+logger.Info().Msg(&quot;Message one.&quot;)
+logger.Debug().Msg(&quot;Message two.&quot;)
+</code></pre>
+<p>Happy logging! :)</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../04-routing/" class="btn btn-neutral float-left" title="Routing"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../04-routing/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
