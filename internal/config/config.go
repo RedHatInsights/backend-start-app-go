@@ -15,12 +15,13 @@ var config struct {
 	Database struct {
 		Host     string `env:"HOST" env-default:"localhost" env-description:"main database hostname"`
 		Port     uint16 `env:"PORT" env-default:"5432" env-description:"main database port"`
-		Name     string `env:"NAME" env-default:"provisioning" env-description:"main database name"`
+		Name     string `env:"NAME" env-default:"hellos" env-description:"main database name"`
 		User     string `env:"USER" env-default:"postgres" env-description:"main database username"`
 		Password string `env:"PASSWORD" env-default:"" env-description:"main database password"`
 	} `env-prefix:"DATABASE_"`
 	Logging struct {
-		Level string `env:"LEVEL" env-default:"info" env-description:"logger level (trace, debug, info, warn, error, fatal, panic)"`
+		Level         string `env:"LEVEL" env-default:"info" env-description:"logger level (trace, debug, info, warn, error, fatal, panic)"`
+		DatabaseLevel string `env:"DB_LEVEL" env-default:"info" env-description:"database logs level (trace, debug, info, warn, error, fatal, panic)"`
 	} `env-prefix:"LOGGING_"`
 	Cloudwatch struct {
 		Enabled bool   `env:"ENABLED" env-default:"false" env-description:"cloudwatch logging exporter (enabled in clowder)"`

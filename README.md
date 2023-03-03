@@ -10,3 +10,11 @@ and running following command from project directory.
 ```sh
 mkdocs serve
 ```
+
+## Running locally
+
+Prerequisites:
+
+* Postgresql database server
+* Postgresql empty database owned by a selected user
+* A way to grant access to the database

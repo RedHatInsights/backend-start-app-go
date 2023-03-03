@@ -2,8 +2,12 @@ package main
 
 import (
 	"consoledot-go-template/internal/config"
+	"consoledot-go-template/internal/db"
 	"consoledot-go-template/internal/logging"
 	"consoledot-go-template/internal/routes"
+	// DAO import for pgx implementation
+	_ "consoledot-go-template/internal/dao/pgx"
+
 	"context"
 	"errors"
 	"fmt"
@@ -22,6 +26,14 @@ func main() {
 	logger, closeFn := logging.InitializeLogger()
 	defer closeFn()
 	log.Logger = logger
+
+	// initialize the rest
+	err := db.Initialize(mainCtx, "public")
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error initializing database")
+		panic(err)
+	}
+	defer db.Close()
 
 	//log.Info().Msgf("Starting an instance on port %d with prometheus on %d", config.Application.Port, config.Prometheus.Port)
 	log.Info().Msgf("Starting an instance on port %d", config.Application.Port)
