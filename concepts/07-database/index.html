@@ -3,18 +3,18 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://example.com/concepts/02-makefile/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://example.com/concepts/07-database/" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Makefile - Go basic concepts</title>
+    <title>Database - Go basic concepts</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Makefile";
-        var mkdocs_page_input_path = "concepts/02-makefile.md";
-        var mkdocs_page_url = "/concepts/02-makefile/";
+        var mkdocs_page_name = "Database";
+        var mkdocs_page_input_path = "concepts/07-database.md";
+        var mkdocs_page_url = "/concepts/07-database/";
       </script>
     
     <script src="../../js/jquery-3.6.0.min.js" defer></script>
@@ -48,9 +48,7 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../01-documentation/">Documentation</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Makefile</a>
-    <ul class="current">
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../02-makefile/">Makefile</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../03-building/">Building</a>
                   </li>
@@ -60,7 +58,23 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../06-configuration/">Configuration</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../07-database/">Database</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Database</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#migrations">Migrations</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#code-structure">Code structure</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#db-package">DB package</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dao">DAO</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#model">Model</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dao-methods">DAO methods</a>
+    </li>
+    </ul>
                   </li>
               </ul>
       </div>
@@ -78,7 +92,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
           <li>Concepts &raquo;</li>
-      <li>Makefile</li>
+      <li>Database</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -87,19 +101,48 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h2 id="makefile">Makefile</h2>
-<p>Golan has a tooling around many commands.
-We believe it is helpful to customize these commands for actual project needs.</p>
-<p>We help document all the current targets by providing the <code>make help</code> we encourage you to continue this effort.
-It makes it very easy for new developers to see what common actions are needed for working on the project.</p>
-<p>We drafted the Makefile targets split under <code>mk</code> directory,
-so it's easier to keep targets grouped by their purpose.</p>
+                <h1 id="database">Database</h1>
+<p>When we want to keep state, we most likely want a relational database for our service.
+ConsoleDot platform has settled on using PostgreSQL for all apps.
+This give apps clear choice for drivers, we can build our service with only single database in mind.</p>
+<p>When building a go application we could use <a href="https://gorm.io/">GORM</a> that deals with any database and has many ORM features.
+In this service tho, we expect to the database model being quite simple and use low level drivers.
+This gives us much more power to use pure go objects and strong typing.</p>
+<h2 id="migrations">Migrations</h2>
+<p>We use simple tool tern for migrations and migrations written in pure SQL.
+It allows to lock database during migrations.
+We use go embedding for migrations, so migrations are embedded into the migration binary.</p>
+<h2 id="code-structure">Code structure</h2>
+<h3 id="db-package">DB package</h3>
+<p>We keep database initialization in a separate package.
+Here we just initialize the database connection global pool that can be accessed from other packages.
+Initialization <code>db.Initialize</code> accepts schema, we will use this for integration testing later on.</p>
+<h3 id="dao">DAO</h3>
+<p>To organize our code, we want some structure and this service uses Data access objects.
+These are objects that abstract the data fetching process and define data access interfaces.</p>
+<p>This allows for easy database abstraction.
+We can use this during unit testing, to stub away database.</p>
+<h3 id="model">Model</h3>
+<p>Model is simple data structure that represents an entity of state.</p>
+<h2 id="dao-methods">DAO methods</h2>
+<p>Example dao method, that accepts a model and saves it in a database.</p>
+<pre><code class="language-go">func (x *helloDaoPgx) RecordHello(ctx context.Context, hello *models.Hello) error {
+    query := `
+        INSERT INTO hellos (from, to, message)
+        VALUES ($1, $2, $3) RETURNING id`
+
+    err := db.Pool.QueryRow(ctx, query, hello.From, hello.To, hello.Message).Scan(&amp;hello.ID)
+    if err != nil {
+        return fmt.Errorf(&quot;pgx error: %w&quot;, err)
+    }
+    return nil
+}
+</code></pre>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../01-documentation/" class="btn btn-neutral float-left" title="Documentation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../03-building/" class="btn btn-neutral float-right" title="Building">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../06-configuration/" class="btn btn-neutral float-left" title="Configuration"><span class="icon icon-circle-arrow-left"></span> Previous</a>
     </div>
 
   <hr/>
@@ -122,10 +165,8 @@ so it's easier to keep targets grouped by their purpose.</p>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../01-documentation/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../06-configuration/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
-    
-      <span><a href="../03-building/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
