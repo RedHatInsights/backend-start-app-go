@@ -8,4 +8,5 @@ nav:
     - Building: 'concepts/03-building.md'
     - Routing: 'concepts/04-routing.md'
     - Logging: 'concepts/05-logging.md'
+    - Configuration: 'concepts/06-configuration.md'
 theme: readthedocs

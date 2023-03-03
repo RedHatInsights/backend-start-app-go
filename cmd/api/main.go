@@ -1,6 +1,7 @@
 package main
 
 import (
+	"consoledot-go-template/internal/config"
 	"consoledot-go-template/internal/logging"
 	"consoledot-go-template/internal/routes"
 	"context"
@@ -15,13 +16,15 @@ import (
 )
 
 func main() {
+	config.Initialize("api.env")
+
 	logger, closeFn := logging.InitializeLogger()
 	defer closeFn()
 	log.Logger = logger
 
 	router := routes.RootRouter()
 	apiServer := http.Server{
-		Addr:    fmt.Sprintf(":%d", 8000),
+		Addr:    fmt.Sprintf(":%d", config.Application.Port),
 		Handler: router,
 	}
 

@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"consoledot-go-template/internal/config"
 	"fmt"
 	"io"
 	"os"
@@ -28,10 +29,9 @@ func init() {
 // It panics on any setup error as it is hard to debug any further problems when logger is not set up.
 // It returns a close function to close all the IO writers as second return parameter.
 func InitializeLogger() (zerolog.Logger, func()) {
-	logLevel := "debug"
-	level, err := zerolog.ParseLevel(logLevel)
+	level, err := zerolog.ParseLevel(config.Logging.Level)
 	if err != nil {
-		panic(fmt.Errorf("cannot parse log level '%s': %w", logLevel, err))
+		panic(fmt.Errorf("cannot parse log level '%s': %w", config.Logging.Level, err))
 	}
 	zerolog.SetGlobalLevel(level)
 	//nolint:reassign
@@ -52,9 +52,13 @@ func initializeLogOutput() (io.Writer, func()) {
 		TimeFormat: time.Kitchen,
 	}
 	// Create stdout output
-	if false {
-		cwClient := newCloudwatchClient()
-		cloudWatchWriter, err := cloudwatchwriter2.NewWithClient(cwClient, 500*time.Millisecond, config.Cloudwatch.Group, config.Cloudwatch.Stream)
+	if config.Cloudwatch.Enabled {
+		// see internal/config/helpers.go you can choose better identifier for you stream
+		// this field is customizable, but when you start to deploy multiple containers,
+		// binary is a good distinguishing factor which part of your service sent the log.
+		stream := config.BinaryName()
+		cwClient := newCloudwatchClient(config.Cloudwatch.Region, config.Cloudwatch.Key, config.Cloudwatch.Secret, config.Cloudwatch.Session)
+		cloudWatchWriter, err := cloudwatchwriter2.NewWithClient(cwClient, 500*time.Millisecond, config.Cloudwatch.Group, stream)
 		if err != nil {
 			panic(fmt.Errorf("cannot initialize cloudwatch: %w", err))
 		}

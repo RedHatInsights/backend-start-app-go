@@ -22,3 +22,7 @@ generate-help-doc: ## Generate 'make help' markdown in docs/
 	echo '```' >> $(MAKE_DOC)
 	make help | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $(MAKE_DOC)
 	echo '```' >> $(MAKE_DOC)
+
+.PHONY: generate-example-config
+generate-example-config: ## Generate example configuration
+	go run cmd/confgen/main.go > config/api.env.example

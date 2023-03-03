@@ -2,6 +2,7 @@
 api
 
 # Local configs
+api.env
 mk/local.mk
 
 # Studio metadata
