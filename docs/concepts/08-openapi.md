@@ -222,3 +222,30 @@ The spec will be generated to both JSON and YAML.
 It is straight forward to get rid one of the formats if you don't find it useful.
 
 At this point it should be straight forward to add more types or routes to our spec.
+
+## OpenAPI spec endpoint
+
+The app should serve it's current spec for easier integration with some apps.
+We will use embedding in the `/api` package and create a http handler,
+that will write the generated json spec.
+
+This is all we need:
+
+```go
+// api/openapi_handler.go
+
+func ServeOpenAPISpec(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := w.Write(embeddedJSONSpec); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"msg": "%s"`, err.Error())))
+	}
+}
+```
+
+To return this spec on a path `/api/prefix/v1/openapi.json`
+we will create a new route in the api router.
+
+```go
+router.Get("/openapi.json", api.ServeOpenAPISpec)
+```

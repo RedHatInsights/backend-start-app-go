@@ -5,7 +5,9 @@ import "github.com/go-chi/chi/v5"
 func RootRouter() *chi.Mux {
 	router := chi.NewRouter()
 
-	router.Mount(PathPrefix(), apiRouter())
+	apiR := apiRouter()
+	router.Mount(pathVersionedPrefix("v1"), apiR)
+	router.Mount(pathVersionedPrefix("v1.0"), apiR)
 
 	return router
 }
