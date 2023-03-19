@@ -16,12 +16,15 @@ import (
 )
 
 func main() {
-	config.Initialize("api.env")
+	mainCtx := context.Background()
+	config.Initialize("config/api.env")
 
 	logger, closeFn := logging.InitializeLogger()
 	defer closeFn()
 	log.Logger = logger
 
+	//log.Info().Msgf("Starting an instance on port %d with prometheus on %d", config.Application.Port, config.Prometheus.Port)
+	log.Info().Msgf("Starting an instance on port %d", config.Application.Port)
 	router := routes.RootRouter()
 	apiServer := http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Application.Port),
@@ -34,14 +37,14 @@ func main() {
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		<-sigs
 		if err := apiServer.Shutdown(context.Background()); err != nil {
-			//log.Fatal().Err(err).Msg("Main service shutdown error")
+			log.Fatal().Err(err).Msg("Main service shutdown error")
 		}
 		close(waitForSignal)
 	}()
 
 	if err := apiServer.ListenAndServe(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
-			//log.Fatal().Err(err).Msg("Main service listen error")
+			log.Fatal().Err(err).Msg("Main service listen error")
 		}
 	}
 
