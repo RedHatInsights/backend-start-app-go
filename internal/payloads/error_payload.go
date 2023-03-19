@@ -1,6 +1,7 @@
 package payloads
 
 import (
+	"consoledot-go-template/internal/logging"
 	"context"
 	"fmt"
 	"net/http"
@@ -24,6 +25,7 @@ func (e ErrorResponse) Render(_ http.ResponseWriter, r *http.Request) error {
 }
 
 func newErrorResponse(ctx context.Context, status int, userMsg string, err error) ErrorResponse {
+	logging.Logger(ctx).Err(err).Msg(userMsg)
 	return ErrorResponse{
 		HTTPStatusCode: status,
 		Message:        userMsg,

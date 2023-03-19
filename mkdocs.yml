@@ -11,4 +11,5 @@ nav:
     - Configuration: 'concepts/06-configuration.md'
     - Database: 'concepts/07-database.md'
     - OpenAPI: 'concepts/08-openapi.md'
+    - Testing: 'concepts/09-testing.md'
 theme: readthedocs
