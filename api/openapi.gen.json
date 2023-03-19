@@ -1,0 +1,163 @@
+{
+  "components": {
+    "responses": {
+      "BadRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/v1.ErrorResponse"
+            }
+          }
+        },
+        "description": "The request's parameters are invalid"
+      },
+      "InternalError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/v1.ErrorResponse"
+            }
+          }
+        },
+        "description": "The server encountered an internal error"
+      },
+      "NotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/v1.ErrorResponse"
+            }
+          }
+        },
+        "description": "The requested resource was not found"
+      }
+    },
+    "schemas": {
+      "v1.ErrorResponse": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "msg": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "v1.HelloRequest": {
+        "properties": {
+          "id": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "sender": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "v1.HelloResponse": {
+        "properties": {
+          "id": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "recipient": {
+            "type": "string"
+          },
+          "sender": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "THIS API IS IN DEVELOPMENT - ENDPOINTS MIGHT CHANGE",
+    "license": {
+      "name": "GPL-3.0"
+    },
+    "title": "template-api",
+    "version": "1.0.0-dev"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/hellos": {
+      "get": {
+        "description": "Returns last 100 greetings recorded.",
+        "operationId": "getGreetingList",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/v1.HelloResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Success response"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "description": "Allows recording a greeting allowing to send a sender name and a custom greeting message.\n",
+        "operationId": "sayHi",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v1.HelloRequest"
+              }
+            }
+          },
+          "description": "The request payload format",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1.HelloResponse"
+                }
+              }
+            },
+            "description": "Success response"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Local development",
+      "url": "http://0.0.0.0:{port}/api/{applicationName}",
+      "variables": {
+        "applicationName": {
+          "default": "template"
+        },
+        "port": {
+          "default": "8000"
+        }
+      }
+    }
+  ]
+}

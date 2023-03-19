@@ -6,6 +6,6 @@ COPY . .
 RUN make prep build strip
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
-COPY --from=build /build/api /api
+COPY --from=build /build/api-bin /api-bin
 USER 1001
-CMD ["/api"]
+CMD ["/api-bin"]

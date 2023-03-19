@@ -9,3 +9,7 @@ It aims to be a basic API serving service with a database.
 All packages live under `/internal` to denote we do not intend to share these with other apps.
 
 All binaries have a directory under `/cmd` these are the app entrypoints.
+
+Make targets are under `/mk` directory.
+
+Config is under `/config` directory.

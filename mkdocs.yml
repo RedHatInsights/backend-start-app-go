@@ -10,4 +10,5 @@ nav:
     - Logging: 'concepts/05-logging.md'
     - Configuration: 'concepts/06-configuration.md'
     - Database: 'concepts/07-database.md'
+    - OpenAPI: 'concepts/08-openapi.md'
 theme: readthedocs

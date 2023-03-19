@@ -9,19 +9,19 @@ LDFLAGS = "-X $(PACKAGE_BASE)/version.BuildCommit=$(shell git rev-parse --short 
 
 .PHONY: run
 run: api ## Build and run backend API
-	./api
+	./api-bin
 
 build: api ## Build all binaries
 
 .PHONY: strip
 strip: build ## Strip debug information
-	strip api
+	strip api-bin
 
 all-deps: $(SRC_GO) $(SRC_SQL) $(SRC_YAML)
 
 api: all-deps ## Build backend API service
-	CGO_ENABLED=0 go build -ldflags $(LDFLAGS) -o api ./cmd/api
+	CGO_ENABLED=0 go build -ldflags $(LDFLAGS) -o api-bin ./cmd/api
 
 .PHONY: clean
 clean: ## Clean build artifacts
-	-rm api
+	-rm api-bin

@@ -1,0 +1,44 @@
+openapi: 3.0.0
+info:
+  description: "THIS API IS IN DEVELOPMENT - ENDPOINTS MIGHT CHANGE"
+  license:
+    name: GPL-3.0
+  title: template-api
+  version: 1.0.0-dev
+
+paths:
+  /hellos:
+    get:
+      operationId: getGreetingList
+      description: Returns last 100 greetings recorded.
+      responses:
+        '200':
+          description: 'Success response'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/v1.HelloResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      operationId: sayHi
+      description: >
+        Allows recording a greeting allowing to send a sender name and a custom greeting message.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/v1.HelloRequest'
+        description: "The request payload format"
+        required: true
+      responses:
+        '200':
+          description: "Success response"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/v1.HelloResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
