@@ -105,3 +105,23 @@ We have already made few design decisions:
 ## Unit test suite
 
 Now we can add a make target `make test` that runs our tests.
+
+## Database test suite
+
+We are stubbing database to speed up and isolate our unit tests.
+This is great, but how do we test our DAO tests.
+There are ways to test with in-memory databases,
+tho here we have decided to use real database.
+Database is a major integration, and it is not so slow we can't run these tests with ease,
+when limited to testing DAO methods.
+
+We have a testing main in `internal/dao/tests/main.go`
+and environment setup and teardown code in `internal/dao/tests/environments.go`.
+
+All the other files are testing files and best practice is to have a file per DAO.
+
+We aim at full coverage, to make sure our SQL queries are correct.
+As every test, if you are doing anything special in your DAO method,
+be sure to test for it.
+
+Database test suite can be run `make test-database` and we can set it up in a separate suite in CI.
