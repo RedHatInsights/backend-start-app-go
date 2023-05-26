@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://example.com/concepts/09-testing/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Testing - Go basic concepts</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Testing";
+        var mkdocs_page_input_path = "concepts/09-testing.md";
+        var mkdocs_page_url = "/concepts/09-testing/";
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Go basic concepts
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Concepts</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../01-documentation/">Documentation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../02-makefile/">Makefile</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../03-building/">Building</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../04-routing/">Routing</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../05-logging/">Logging</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../06-configuration/">Configuration</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../07-database/">Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../08-openapi/">OpenAPI</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Testing</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#testing-strategy">Testing strategy</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stubbing">Stubbing</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#handler-tests">Handler tests</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#unit-test-suite">Unit test suite</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#database-test-suite">Database test suite</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Go basic concepts</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Concepts &raquo;</li>
+      <li>Testing</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="testing">Testing</h1>
+<p><em>Here we cover how to test our Go code, we are only covering unit testing of the code.</em></p>
+<p><em>Integration and system testing of ConsoleDot application should be done by a <a href="https://insights-qe.pages.redhat.com/iqe-core-docs/tutorial/index.html">IQE</a> plugin</em></p>
+<p>We have an application that has documented API and on request writes data to a database.</p>
+<h2 id="testing-strategy">Testing strategy</h2>
+<p>Testing strategy chosen for this template is:</p>
+<ul>
+<li>Tests are as isolated as possible</li>
+<li>isolate between the tests</li>
+<li>isolate the testing layer from other application layers</li>
+<li>Test are testing the public API of a package</li>
+<li>avoid using internal functions</li>
+<li>public interface means interface of given layer, not a user interface (API)</li>
+</ul>
+<p>We have two suites of tests.
+One is classical Go unit tests, second is for database tests.</p>
+<h2 id="stubbing">Stubbing</h2>
+<p>Now we can dive deeper on the idea of multiple implementation for a code layer.
+We have an interface for our DAO, which gives us an option to add another implementation.
+This other implementation will be storing the data in memory.
+Stubbed layer makes tests significantly faster and simplifies the DAO code to a bare minimum.</p>
+<p>We also keep the stub in a context.
+Thanks to context isolation, the tests are runnable in parallel without leaking data.</p>
+<p>The minimal stub reservation looks like this.
+We are skipping implementation of the context setter and getter here.</p>
+<pre><code class="language-go">func init() {
+    dao.GetHelloDao = getHelloDao
+}
+
+type helloDaoStub struct {
+    store []*models.Hello
+}
+
+func getHelloDao(ctx context.Context) dao.HelloDao {
+    return getHelloDaoStub(ctx)
+}
+
+func (x *helloDaoStub) List(ctx context.Context, limit, offset int64) ([]*models.Hello, error) {
+    return x.store, nil
+}
+
+func (x *helloDaoStub) Record(ctx context.Context, hello *models.Hello) error {
+    hello.ID = int64(len(x.store))
+    x.store = append(x.store, hello)
+    return nil
+}
+</code></pre>
+<p>Now we are ready to write a handler test isolated from the underlying database.</p>
+<h2 id="handler-tests">Handler tests</h2>
+<p>Golang has a many features that make testing easier.
+We will cover the most basic, but there is much more!
+Ask in the community, not all the features are as well documented as go production code.</p>
+<p>Let see the simplest test we can have to get into testing.
+The following example shows how to set up a context with:
+* the prepared DAO stub,
+* stubbed request using directly http package testing helper,
+* response mock also using http package helper</p>
+<p>We are testing whether the empty response is rendered correctly.</p>
+<pre><code class="language-go">package services_test
+
+func TestListHellos(t *testing.T) {
+    t.Run(&quot;handles empty database well&quot;, func(t *testing.T) {
+        ctx := stub.WithHelloDao(context.Background())
+
+        req, err := http.NewRequestWithContext(ctx, &quot;GET&quot;, &quot;/api/template/hellos&quot;, nil)
+        require.NoError(t, err, &quot;failed to create request&quot;)
+
+        rr := httptest.NewRecorder()
+        handler := http.HandlerFunc(services.ListHellos)
+        handler.ServeHTTP(rr, req)
+
+        require.Equal(t, http.StatusOK, rr.Code, &quot;Wrong status code&quot;)
+        assert.Equal(t, &quot;[]\n&quot;, rr.Body.String())
+    })
+}
+</code></pre>
+<p>We have already made few design decisions:
+* the test lives in a separate package
+  * go recognizes a suffix <code>_test</code> as special package and allows two packages in the same folder
+  * this makes it impossible to test internal unexported functions
+* We use a <code>TestXX</code> function to test function <code>XX</code>
+* We are nesting test cases using <code>t.Run</code>
+* We are using <a href="github.com/stretchr/testify">stretchr/testify</a> to add a bit of syntactical sugger.</p>
+<h2 id="unit-test-suite">Unit test suite</h2>
+<p>Now we can add a make target <code>make test</code> that runs our tests.</p>
+<h2 id="database-test-suite">Database test suite</h2>
+<p>We are stubbing database to speed up and isolate our unit tests.
+This is great, but how do we test our DAO tests.
+There are ways to test with in-memory databases,
+tho here we have decided to use real database.
+Database is a major integration, and it is not so slow we can't run these tests with ease,
+when limited to testing DAO methods.</p>
+<p>We have a testing main in <code>internal/dao/tests/main.go</code>
+and environment setup and teardown code in <code>internal/dao/tests/environments.go</code>.</p>
+<p>All the other files are testing files and best practice is to have a file per DAO.</p>
+<p>We aim at full coverage, to make sure our SQL queries are correct.
+As every test, if you are doing anything special in your DAO method,
+be sure to test for it.</p>
+<p>Database test suite can be run <code>make test-database</code> and we can set it up in a separate suite in CI.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../08-openapi/" class="btn btn-neutral float-left" title="OpenAPI"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../08-openapi/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

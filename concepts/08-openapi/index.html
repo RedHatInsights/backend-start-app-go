@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://example.com/concepts/08-openapi/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>OpenAPI - Go basic concepts</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "OpenAPI";
+        var mkdocs_page_input_path = "concepts/08-openapi.md";
+        var mkdocs_page_url = "/concepts/08-openapi/";
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Go basic concepts
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Concepts</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../01-documentation/">Documentation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../02-makefile/">Makefile</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../03-building/">Building</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../04-routing/">Routing</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../05-logging/">Logging</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../06-configuration/">Configuration</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../07-database/">Database</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">OpenAPI</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#generate-openapi-spec">Generate OpenAPI spec</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#payloads">Payloads</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#using-payloads">Using payloads</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#error-handling">Error handling</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#openapi-generator">OpenAPI generator</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#openapi-spec-endpoint">OpenAPI spec endpoint</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../09-testing/">Testing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Go basic concepts</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Concepts &raquo;</li>
+      <li>OpenAPI</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="openapi-requests-and-responses">OpenAPI requests and responses</h1>
+<p><em>Here we cover how to maintain OpenAPI spec and how to keep the API in accordance to the spec.</em></p>
+<p>Serving OpenAPI spec is a hard requirement for every service on ConsoleDot.
+It serves as an API contract, for other services to know what to expect from your service.
+This spec should be always backward compatible starting your first release.
+If you need to make incompatible changes,
+you will need to keep the old spec, and it's corresponding API working to allow for migrations.
+Please keep that in mind while designing the spec.
+It's convenient to get it somewhat right on the first release.</p>
+<p>Note: first release not the first commit, we do not encourage over designing your API upfront,
+we know it will change as you implement it, but keep in mind to keep the OpenAPI as tidy as possible. :)</p>
+<h2 id="generate-openapi-spec">Generate OpenAPI spec</h2>
+<p>There are generally three major approaches to the OpenAPI spec to keep it in sync with your API.</p>
+<ol>
+<li>Generate API service from the spec.</li>
+<li>Generate OpenAPI spec from the services</li>
+<li>Hybrid approach</li>
+</ol>
+<p>There are advantages to all of these approach, and it's up to you to choose one.
+This service template covers hybrid approach as some services might leverage the control it gives to maintainers.</p>
+<p><em>Note: hybrid approach has more variants, feel free to explore if the choice makes you uncomfortable.</em></p>
+<p>Hybrid approach in our case means we will generate request and response types from Go to OpenAPI.
+The rest - paths, various response codes are kept manually.
+This gives the highest level of freedom while still taking care of the most of the manual burden
+behind keeping the types in sync from Go to OpenAPI.</p>
+<h3 id="payloads">Payloads</h3>
+<p>To maintain our request and response types, we will use payload types that implement
+Chi's render interface, see <a href="https://github.com/go-chi/render"><code>go-chi/render</code></a> for more details.</p>
+<p>We will store our payloads in separate folder, these will use models to generate responses.
+We can easily use type embedding for the payloads and just copy the model fields, but it is discouraged.
+You might accidentally copy and expose fields you don't want. We will be copying the data instead.</p>
+<p>We want our users to be able to define a sender of a message and a message,
+but we will define recipient statically, and not allow setting it through the create request.
+We are also renaming the internal columns to expose them under different names in the API
+to showcase what you might leverage the payloads for.</p>
+<p>Payload is a go struct that has json tag for bindings from and to JSON.
+Following is a basic example where request and response have the same data.
+There is more advance example with comments in <code>hello_payload.go</code>.</p>
+<pre><code class="language-go">// internal/payloads/hello_payload.go
+
+type HelloPayload struct {
+    ID      uint64 `json:&quot;id&quot;`
+    Sender  string `json:&quot;sender&quot;`
+    Message string `json:&quot;message&quot;`
+}
+type (
+    HelloRequest  HelloPayload
+    HelloResponse HelloPayload
+)
+
+func (req HelloRequest) Bind(_ *http.Request) error {
+    return nil
+}
+
+func (req HelloResponse) Render(_ http.ResponseWriter, _ *http.Request) error {
+    return nil
+}
+</code></pre>
+<h4 id="using-payloads">Using payloads</h4>
+<p>We use payloads in the http handlers to bind and render data to and from JSON.</p>
+<p>First lets take a look at binding data from json request to Go struct.</p>
+<pre><code class="language-go">// internal/services/hello_service.go
+
+import &quot;github.com/go-chi/render&quot;
+
+func SayHello(w http.ResponseWriter, r *http.Request) {
+    payload := payloads.HelloRequest{}
+
+    if err := render.Bind(r, payload); err != nil {
+        // Error handling TBD
+        return
+    }
+}
+</code></pre>
+<p>And now let see rendering a JSON response.</p>
+<pre><code class="language-go">func ListHellos(w http.ResponseWriter, r *http.Request) {
+    helloDao := dao.GetHelloDao(r.Context())
+    hellos, err := helloDao.List(r.Context(), 100, 0)
+    // error handling TBD
+
+    if renderErr := render.RenderList(w, r, payloads.NewHelloListResponse(hellos)); renderErr != nil {
+        // error handling TBD
+    }
+}
+</code></pre>
+<h3 id="error-handling">Error handling</h3>
+<p>In above examples, we have left out the error handling.
+Let us dive into it here.
+Errors are just another type of payload we want to emit to user.
+The main difference here is, that we want to standardize the payload structure across all handlers.</p>
+<p>We will have a helper render function to render the error payloads.
+As rendering the payload itself can error out,
+we want to have a fallback to general 500 error rendering in this helper.</p>
+<pre><code class="language-go">// internal/services/error_renderer.go
+
+func renderError(w http.ResponseWriter, r *http.Request, renderer render.Renderer) {
+    if renderErr := render.Render(w, r, renderer); renderErr != nil {
+        writeBasicError(w, r, renderErr) // this is a fallback
+    }
+}
+</code></pre>
+<p>Our helper expects a chi renderer, so we need a payload to pass in.
+For this purpose we introduce error payloads in <code>internal/payloads/error_payload.go</code>.
+The following is a basis for all our error payloads.</p>
+<pre><code class="language-go">// internal/payloads/error_payload.go
+
+// ResponseError is used as a payload for all errors
+type ErrorResponse struct {
+    // HTTP status code
+    HTTPStatusCode int `json:&quot;-&quot;`
+    // user facing error message
+    Message string `json:&quot;msg&quot;`
+    // full root cause
+    Error string `json:&quot;error&quot;`
+}
+
+func (e ErrorResponse) Render(_ http.ResponseWriter, r *http.Request) error {
+    render.Status(r, e.HTTPStatusCode)
+    return nil
+}
+
+func newErrorResponse(ctx context.Context, status int, userMsg string, err error) ErrorResponse {
+    return &amp;ErrorResponse{
+        HTTPStatusCode: status,
+        Message:        userMsg,
+        Error:          err.Error(),
+    }
+}
+</code></pre>
+<p>In previous code snippets, we have seen three types of errors.
+Bad request error, which should be status 400.
+Database error, which can be not found and should have status 404, or all other DB errors status 500.
+General code error and redner error, which are both 500 status.</p>
+<p>Let's add payload constructors for these errors.
+Notice that all of these have user message.
+The go error holds very useful debugging info and can be quite helpful to understand
+what went technically wrong.
+Usually we want to convey the main message to users and make it more user readable.
+That's where the user message comes in.</p>
+<pre><code class="language-go">func NewInvalidRequestError(ctx context.Context, message string, err error) *ResponseError {
+    message = fmt.Sprintf(&quot;Invalid request: %s&quot;, message)
+    return newResponse(ctx, http.StatusBadRequest, message, err)
+}
+
+func NewDAOError(ctx context.Context, message string, err error) *ResponseError {
+    message = fmt.Sprintf(&quot;DAO error: %s&quot;, message)
+    return newResponse(ctx, http.StatusInternalServerError, message, err)
+}
+
+func NewRenderError(ctx context.Context, message string, err error) *ResponseError {
+    message = fmt.Sprintf(&quot;Rendering error: %s&quot;, message)
+    return newResponse(ctx, http.StatusInternalServerError, message, err)
+}
+</code></pre>
+<p>We want to keep these simple, so for the dao error, we will introduce one more render helper.
+Here we will wrap the decision whether to render NotFound or Internal error.</p>
+<pre><code class="language-go">// internal/services/error_renderer.go
+
+func renderNotFoundOrDAOError(w http.ResponseWriter, r *http.Request, err error, resource string) {
+    if errors.Is(err, dao.ErrNoRows) {
+        renderError(w, r, payloads.NewNotFoundError(r.Context(), resource, err))
+    } else {
+        renderError(w, r, payloads.NewDAOError(r.Context(), resource, err))
+    }
+}
+</code></pre>
+<p>Take a look at the code for the full implementation.</p>
+<h3 id="openapi-generator">OpenAPI generator</h3>
+<p>We will add another binary <code>openapi_spec</code> for generating our OpenAPI spec.</p>
+<p>We will use a <a href="github.com/getkin/kin-openapi/"><code>kin-openapi</code></a>'s generator to do the heavy lifting for us.</p>
+<p>We won't go in details of the generating itself.
+There are two notable aspect we need to pay attention to.</p>
+<p>We have a file <code>cmd/openapi_spec/paths.yml</code> alongside the binary
+to manually maintain routes and used request and response schemas.
+In the binary <code>main.go</code> itself we need to list all the payload schemas in method <code>addPayloads</code>.
+It is kept as first function for convenience.</p>
+<p>The spec will be generated to both JSON and YAML.
+It is straight forward to get rid one of the formats if you don't find it useful.</p>
+<p>At this point it should be straight forward to add more types or routes to our spec.</p>
+<h2 id="openapi-spec-endpoint">OpenAPI spec endpoint</h2>
+<p>The app should serve it's current spec for easier integration with some apps.
+We will use embedding in the <code>/api</code> package and create a http handler,
+that will write the generated json spec.</p>
+<p>This is all we need:</p>
+<pre><code class="language-go">// api/openapi_handler.go
+
+func ServeOpenAPISpec(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set(&quot;Content-Type&quot;, &quot;application/json&quot;)
+    if _, err := w.Write(embeddedJSONSpec); err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        _, _ = w.Write([]byte(fmt.Sprintf(`{&quot;msg&quot;: &quot;%s&quot;`, err.Error())))
+    }
+}
+</code></pre>
+<p>To return this spec on a path <code>/api/prefix/v1/openapi.json</code>
+we will create a new route in the api router.</p>
+<pre><code class="language-go">router.Get(&quot;/openapi.json&quot;, api.ServeOpenAPISpec)
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../07-database/" class="btn btn-neutral float-left" title="Database"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../09-testing/" class="btn btn-neutral float-right" title="Testing">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../07-database/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../09-testing/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

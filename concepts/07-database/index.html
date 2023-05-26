@@ -74,7 +74,15 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dao-methods">DAO methods</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dao-initialization">DAO initialization</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#using-dao-from-services">Using DAO from services</a>
+    </li>
     </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../08-openapi/">OpenAPI</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../09-testing/">Testing</a>
                   </li>
               </ul>
       </div>
@@ -111,7 +119,9 @@ This gives us much more power to use pure go objects and strong typing.</p>
 <h2 id="migrations">Migrations</h2>
 <p>We use simple tool tern for migrations and migrations written in pure SQL.
 It allows to lock database during migrations.
-We use go embedding for migrations, so migrations are embedded into the migration binary.</p>
+We use go embedding for migrations, so migrations are embedded into the migration binary.
+We are adding another binary for migrations
+and also a make target <code>make migrate</code> to run this binary.</p>
 <h2 id="code-structure">Code structure</h2>
 <h3 id="db-package">DB package</h3>
 <p>We keep database initialization in a separate package.
@@ -121,12 +131,14 @@ Initialization <code>db.Initialize</code> accepts schema, we will use this for i
 <p>To organize our code, we want some structure and this service uses Data access objects.
 These are objects that abstract the data fetching process and define data access interfaces.</p>
 <p>This allows for easy database abstraction.
-We can use this during unit testing, to stub away database.</p>
+We will use this during unit testing, to stub away database.</p>
 <h3 id="model">Model</h3>
 <p>Model is simple data structure that represents an entity of state.</p>
 <h2 id="dao-methods">DAO methods</h2>
 <p>Example dao method, that accepts a model and saves it in a database.</p>
-<pre><code class="language-go">func (x *helloDaoPgx) RecordHello(ctx context.Context, hello *models.Hello) error {
+<pre><code class="language-go">// internal/dao/pgx/hello.go
+
+func (x *helloDaoPgx) Record(ctx context.Context, hello *models.Hello) error {
     query := `
         INSERT INTO hellos (from, to, message)
         VALUES ($1, $2, $3) RETURNING id`
@@ -138,11 +150,42 @@ We can use this during unit testing, to stub away database.</p>
     return nil
 }
 </code></pre>
+<p>In the same file you can find also a <code>List</code> method for further examples.</p>
+<h2 id="dao-initialization">DAO initialization</h2>
+<p>In the dao package, we have only the interfaces of the DAO implementations.
+For each DAO we have a getter, that allows us to initialize the required DAO.</p>
+<p>Our <code>GetHello</code> function returns the implementation of the Hello storage.
+In the implementation of this dao, we use the <code>init</code> trick to assign the implementation getter.</p>
+<pre><code class="language-go">// internal/dao/pgx/hello.go
+
+func init() {
+  dao.GetHelloDao = getHelloDao
+}
+
+type helloDaoPgx struct{}
+
+func getHelloDao(ctx context.Context) dao.HelloDao {
+  return &amp;helloDaoPgx{}
+}
+</code></pre>
+<h2 id="using-dao-from-services">Using DAO from services</h2>
+<p>In our service handlers, we just want to initialize the implementation.
+These files should not care what the implementation is and only cares about it implementing the interface.</p>
+<pre><code class="language-go">helloDao := dao.GetHelloDao(r.Context())
+hellos, err := helloDao.List(r.Context(), 100, 0)
+</code></pre>
+<p>For simplicity, we are using a static limit <code>100</code> and offset <code>0</code>.</p>
+<p>Where do we initialize the implementation?
+In the main of our API!
+We are choosing the implementation per binary, so we can switch implementation for tests.
+It's a bit inconvenient as it can easily be forgotten,
+but the panic caused by it, is easily recognizable.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../06-configuration/" class="btn btn-neutral float-left" title="Configuration"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../08-openapi/" class="btn btn-neutral float-right" title="OpenAPI">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -167,6 +210,8 @@ We can use this during unit testing, to stub away database.</p>
     
       <span><a href="../06-configuration/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
+    
+      <span><a href="../08-openapi/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
